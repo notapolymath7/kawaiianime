@@ -1,0 +1,64 @@
+name: Deploy Kawaiianime+ to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+# Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Allow only one concurrent deployment
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    runs-on: ubuntu-latest
+
+    env:
+      # Force Node.js 24 to fix deprecation warning
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+    steps:
+      # ── Step 1: Checkout with Node.js 24 compatible action ──────────
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # ── Step 2: Rename HTML file to index.html for GitHub Pages ─────
+      - name: Prepare site files
+        run: |
+          # If your file is named differently, rename it to index.html
+          if [ -f "Kawaiianime-Plus-NO-ADMIN.html" ]; then
+            cp Kawaiianime-Plus-NO-ADMIN.html index.html
+            echo "✅ Renamed to index.html"
+          fi
+
+          # Show what files will be deployed
+          echo "📁 Files to deploy:"
+          ls -lh
+
+      # ── Step 3: Setup GitHub Pages ───────────────────────────────────
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      # ── Step 4: Upload the site as artifact ─────────────────────────
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          # Upload entire repository root
+          path: '.'
+
+      # ── Step 5: Deploy to GitHub Pages ──────────────────────────────
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
